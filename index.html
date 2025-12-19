@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Artifact Archive // Sol-03</title>
+  <style>
+    /* --- DESIGN SYSTEM (LIGHT THEME) --- */
+    :root {
+      --bg: #F5F5DC;      /* Beige background */
+      --panel: #FFFFFF;   /* White panels for grid items */
+      --text-main: #333333; /* Dark Grey for main text */
+      --text-dim: #777777;  /* Lighter grey for secondary text */
+      --accent: #000000;    /* Black for sharp accents */
+      --danger: #cc0000;    /* Dark red for used files */
+      --font: "Courier New", monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text-main);
+      font-family: var(--font);
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* --- CRT OVERLAY (Subtle texture for paper-feel, removed dark scanlines) --- */
+    body::after {
+      content: " ";
+      display: block;
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(rgba(255, 255, 255, 0) 50%, rgba(0, 0, 0, 0.02) 50%);
+      background-size: 100% 4px; 
+      z-index: 999;
+      pointer-events: none;
+    }
+
+    /* --- HEADER --- */
+    header {
+      text-align: center;
+      padding: 1.5rem;
+      border-bottom: 1px solid #d3d3b6; /* Slightly darker beige border */
+    }
+    h1 {
+      font-size: 1.2rem;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      color: var(--text-main);
+    }
+
+    /* --- GRID --- */
+    main {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.5rem;
+      width: 100%;
+      max-width: 1000px;
+    }
+
+    @media (max-width: 800px) {
+      .grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    .data-block {
+      background: var(--panel);
+      border: 1px solid #ccc;
+      aspect-ratio: 16/9;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--text-dim);
+    }
+
+    /* Normal Hover */
+    .data-block:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: #fff;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+      transform: translateY(-2px);
+    }
+
+    /* USED STATE (Red) */
+    .data-block.used {
+      border-color: var(--danger);
+      color: var(--danger);
+      opacity: 0.6;
+      background: #fff0f0;
+    }
+    
+    .data-block.used:hover {
+      background: #ffe0e0;
+      box-shadow: 0 0 15px rgba(204, 0, 0, 0.1);
+    }
+
+    .block-id { font-size: 2rem; margin-bottom: 0.5rem; color: #555; }
+    .data-block.used .block-id { color: var(--danger); }
+    
+    .block-label { font-size: 0.65rem; }
+
+    /* --- FOOTER --- */
+    footer {
+      text-align: center;
+      padding: 1rem;
+      font-size: 0.7rem;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* --- OVERLAY --- */
+    #overlay {
+      position: fixed;
+      inset: 0;
+      background: #ffffff; /* PURE WHITE BACKGROUND */
+      z-index: 100;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #overlay.active { display: flex; }
+
+    /* --- LOADER --- */
+    .loader-container { width: 300px; text-align: center; display: none; color: #000; }
+    .loading-text { margin-bottom: 10px; font-size: 0.9rem; animation: blink 0.5s infinite; }
+    .progress-bar-border { width: 100%; height: 20px; border: 2px solid #000; padding: 2px; }
+    .progress-bar-fill { height: 100%; background: #000; width: 0%; transition: width 0.1s linear; }
+
+    /* --- REVEAL CONTENT --- */
+    .reveal-content {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+      position: relative;
+    }
+
+    .hero-image {
+      max-height: 70vh;
+      max-width: 90vw;
+      object-fit: contain;
+      /* REMOVED FILTER: No glitch/sepia effect */
+      filter: none; 
+      /* Clean styling without borders/glow */
+      border: none;
+      box-shadow: none; 
+    }
+
+    .alien-title {
+      margin-top: 2rem;
+      font-size: 1.5rem;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: #000; /* Black text */
+      text-shadow: none; 
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 2rem;
+      right: 2rem;
+      background: none;
+      border: 1px solid #ccc;
+      color: #888;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      font-family: var(--font);
+      text-transform: uppercase;
+      font-size: 0.8rem;
+      z-index: 200;
+      transition: all 0.2s;
+    }
+    .close-btn:hover { border-color: #000; color: #000; background: #f5f5f5; }
+
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Artifact Archive // Planet Sol-03</h1>
+  </header>
+
+  <main>
+    <div class="grid" id="gridContainer"></div>
+  </main>
+
+  <footer>
+    Created by Arpan Mondal
+  </footer>
+
+  <div id="overlay">
+    <button class="close-btn" onclick="closeArtifact()">[ Close File ]</button>
+
+    <div class="loader-container" id="loader">
+      <div class="loading-text">DECRYPTING ARTIFACT DATA...</div>
+      <div class="progress-bar-border">
+        <div class="progress-bar-fill" id="progressFill"></div>
+      </div>
+    </div>
+
+    <div class="reveal-content" id="content">
+      <img id="revealImg" class="hero-image" src="" alt="Artifact">
+      <h1 id="revealTitle" class="alien-title"></h1>
+    </div>
+  </div>
+
+  <script>
+    // --- DATA ---
+    const artifacts = [
+      { id: 1, name: "artifact-1", file: "artifact-1.png" },
+      { id: 2, name: "artifact-2", file: "artifact-2.png" },
+      { id: 3, name: "artifact-3", file: "artifact-3.png" },
+      { id: 4, name: "artifact-4", file: "artifact-4.png" },
+      { id: 5, name: "artifact-5", file: "artifact-5.png" },
+      { id: 6, name: "artifact-6", file: "artifact-6.png" },
+      { id: 7, name: "artifact-7", file: "artifact-7.png" },
+      { id: 8, name: "artifact-8", file: "artifact-8.png" }
+    ];
+
+    let currentBlock = null; // Track which block triggered the overlay
+
+    // --- SETUP GRID ---
+    const grid = document.getElementById('gridContainer');
+    artifacts.forEach(item => {
+      const block = document.createElement('div');
+      block.className = 'data-block';
+      block.id = `block-${item.id}`; // Add ID for tracking
+      block.innerHTML = `
+        <div class="block-id">${item.id.toString().padStart(2, '0')}</div>
+        <div class="block-label">ENCRYPTED</div>
+      `;
+      
+      block.onclick = function() {
+        startDecryption(item, this);
+      };
+      
+      grid.appendChild(block);
+    });
+
+    // --- LOGIC ---
+    const overlay = document.getElementById('overlay');
+    const loader = document.getElementById('loader');
+    const progress = document.getElementById('progressFill');
+    const content = document.getElementById('content');
+    const img = document.getElementById('revealImg');
+    const title = document.getElementById('revealTitle');
+
+    function startDecryption(item, blockElement) {
+      currentBlock = blockElement; // Save reference
+      overlay.classList.add('active');
+      loader.style.display = 'block';
+      content.style.display = 'none';
+      progress.style.width = '0%';
+      
+      let width = 0;
+      const interval = setInterval(() => {
+        if (width >= 100) {
+          clearInterval(interval);
+          revealArtifact(item);
+        } else {
+          width += Math.random() * 8; 
+          if(width > 100) width = 100;
+          progress.style.width = width + '%';
+        }
+      }, 50);
+    }
+
+    function revealArtifact(item) {
+      loader.style.display = 'none';
+      content.style.display = 'flex';
+      img.src = item.file;
+      title.innerText = item.name;
+    }
+
+    function closeArtifact() {
+      overlay.classList.remove('active');
+      
+      // Mark the block as USED (Red)
+      if (currentBlock) {
+        currentBlock.classList.add('used');
+        currentBlock.querySelector('.block-label').innerText = "OPENED";
+      }
+
+      setTimeout(() => { img.src = ""; }, 200);
+    }
+  </script>
+</body>
+</html>
+
