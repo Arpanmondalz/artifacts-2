@@ -251,7 +251,7 @@
       block.id = `block-${item.id}`; // Add ID for tracking
       block.innerHTML = `
         <div class="block-id">${item.id.toString().padStart(2, '0')}</div>
-        <div class="block-label">ENCRYPTED</div>
+        <div class="block-label">NEW</div>
       `;
       
       block.onclick = function() {
@@ -302,7 +302,7 @@
       // Mark the block as USED (Red)
       if (currentBlock) {
         currentBlock.classList.add('used');
-        currentBlock.querySelector('.block-label').innerText = "OPENED";
+        currentBlock.querySelector('.block-label').innerText = "COMPLETE";
       }
 
       setTimeout(() => { img.src = ""; }, 200);
